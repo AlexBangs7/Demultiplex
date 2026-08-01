@@ -2,12 +2,13 @@
 
 import argparse
 import bioinfo
+import gzip
 from itertools import permutations
 
 # Set up args
 def get_args():
     parser=argparse.ArgumentParser()
-    parser.add_argument("-q", "--qscore", help="q-score cutoff for unknown indexes", required=True)
+    parser.add_argument("-q", "--qscore", help="q-score cutoff for unknown indexes", required=False)
     return parser.parse_args()
 args = get_args()
 
@@ -15,10 +16,10 @@ args = get_args()
 # Establish index and fastq files
 directory = "/projects/bgmp/shared/2017_sequencing/"
 index_file = directory + "indexes.txt"
-R1 = directory + "1294_S1_L008_R1_001.fastq.gz"
-R2 = directory + "1294_S1_L008_R2_001.fastq.gz"
-R3 = directory + "1294_S1_L008_R3_001.fastq.gz"
-R4 = directory + "1294_S1_L008_R4_001.fastq.gz"
+R1_file = directory + "1294_S1_L008_R1_001.fastq.gz"
+R2_file = directory + "1294_S1_L008_R2_001.fastq.gz"
+R3_file = directory + "1294_S1_L008_R3_001.fastq.gz"
+R4_file = directory + "1294_S1_L008_R4_001.fastq.gz"
 
 
 # Create dictionaries of matched and hopped index pairs
@@ -26,7 +27,7 @@ def index_pairing(index_file:str):
     ''' When provided a tab separated file containing indexes, output two dictionaries: one with all matched index pairs as keys and one with all hopped index pairs as keys (and zeroes as values for both)'''
     index_set = set() # empty
     with open(index_file, "r") as index_fh: 
-        index_fh.readline()                                        # Skip header
+        index_fh.readline() # Skip header
 
         # Check first index for correct sequence location, and add it if so
         index1 = index_fh.readline().strip().split()
@@ -34,6 +35,7 @@ def index_pairing(index_file:str):
             raise TypeError("Provided file does not have index sequences in expected column")
         else:
             index_set.add(index1[4])
+            index_length = len(index1[4])
 
         # Add each index to set
         for line in index_fh:
@@ -50,30 +52,60 @@ def index_pairing(index_file:str):
     for hopped_pair in list(permutations(index_set, r=2)):
         hopped_indexes[f'{hopped_pair[0]}-{hopped_pair[1]}'] = 0
 
-    return matched_indexes, hopped_indexes
+    return matched_indexes, hopped_indexes, index_set
 
-print(len(index_pairing(index_file)[0]))
+matched, hopped, indexes = index_pairing(index_file)
 
+print(matched)
+# Open output files for use later
+# Matched outputs (48)
+mfs = {}
+for index in indexes:
+    mfs[index] = (open(f'output/{index}_R1.fq', 'w'), open(f'output/{index}_R2.fq', 'w'))
+mfs["GTAGCGTA"][0].write("hello")
+# Hopped outputs (2)
+hfs = {}
+hfs["hopped"] = (open(f'output/hopped_R1.fq','w'), open(f'output/hopped_R2.fq','w'))
+# Unknown outputs (2)
+ufs = {}
+ufs["unknown"] = (open(f'output/unknown_R1.fq','w'), open(f'output/unknown_R2.fq','w'))
 
 # 3. Demultiplex function
 
-def demultiplex(R1:str,R2:str,R3:str,R4:str, matched_indexes, hopped_indexes, qscore_cutoff):
-    
-    pass
-# define demultiplex(R1, R2, R3, R4, index_pairs, qscore_cutoff): 
-#     ``` Provided four fastq files (two containing biological reads and two containing index reads), a dictionary containing all index pairs, and a qscore cutoff set by the user. Return two fastq files for each matching index-pair, two fastq files for all hopped index-pairs, two fastq files for all unknown index-pairs, and finally a tsv files with counts of all matched and hopped index-pairs ```
+def demultiplex(Read1:str,Read2:str,Read3:str,Read4:str, matched_indexes:dict, hopped_indexes:dict, qscore_cutoff:int):
+    with gzip.open(Read1,"rt") as R1, gzip.open(Read2,"rt") as R2, gzip.open(Read3,"rt") as R3, gzip.open(Read4,"rt") as R4:
+        line = 0
+        r1_record = []
+        r2_record = []
+        r3_record = []
+        r4_record = []            
+        while True:
+            r1_record.append(R1.readline().strip("\n"))
+            r2_record.append(R2.readline().strip("\n"))
+            r3_record.append(R3.readline().strip("\n"))
+            r4_record.append(R4.readline().strip("\n"))
+            r3_record[1] = bioinfo.reverse_comp(r3_record[1])
 
-#     unknown_count = 0
-#     WITH R1 open as R1, R2 open as R2, R3 open as R3, R4 open as R4: # Using gzip
+            if line % 4 == 3:
+                r1_record[0] += f'{r2_record[1]}+{r3_record[1]}'
+                r4_record[0] += f'{r2_record[1]}+{r3_record[1]}'
+            
+            R2score = bioinfo.qual_score(r2_record[3])
+            R3score = bioinfo.qual_score(r3_record[3])
 
-#         WHILE True:
-#             headers = read header for R1 and R4
-#             skip headers for R2 and R3 # readline but don't assign to variable
-#             R1seq, R4seq = read biological sequence from R1 and R4
-#             R2seq, R3seq = read index sequence from R2 and R3
-#             skip + in each file # readline but don't assign to variable
-#             qscores = read qscores for each file
-#             reverse_complement R3 sequence
+            if R2score or R3score <= qscore_cutoff: # unknown
+                pass
+            elif r2_record[1] or r3_record not in indexes: # unknown index or index with Ns
+                pass
+                #unknown_indexes += 1
+            elif r2_record[1] != r3_record[1]: # hopped
+                pass
+                hopped_indexes[f'{r2_record[1]}+{r3_record[1]}'] += 1
+            else: # matched
+                pass
+                matched_indexes[f'{r2_record[1]}+{r3_record[1]}'] += 1
+            line +=1 
+
 
 #                 IF R2 quality score OR R3 quality score <= qscore cutoff:
 #                     open Unknown FASTQ files

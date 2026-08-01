@@ -1,7 +1,10 @@
-# Lab Notebook — Demultiplexing Assignment 1
+# Lab Notebook — Demultiplexing Assignment 3
 
 **Base Directory**
 - `/projects/bgmp/abangs/bioinfo/Bi622/Demultiplex`
+
+**File Directory**
+- `/projects/bgmp/shared/2017_sequencing`
 
 **Environment / Versions:**
 - Compute environment:
@@ -13,19 +16,23 @@
 
 **Data Source:**
 
-File from talapas
+Files from File Directory
+
 ```
-/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R1_001.fastq.gz # Biological reads
-/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R2_001.fastq.gz # Index reads
-/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R3_001.fastq.gz # Index reads
-/projects/bgmp/shared/2017_sequencing/1294_S1_L008_R4_001.fastq.gz # Biological reads
+indexes.txt # List of indexes found in reads
+1294_S1_L008_R1_001.fastq.gz # Biological reads
+1294_S1_L008_R2_001.fastq.gz # Index reads
+1294_S1_L008_R3_001.fastq.gz # Index reads
+1294_S1_L008_R4_001.fastq.gz # Biological reads
 ```
 
 ---
 
-### [07-21-2026]
+### [07-30-2026]
 
-- Write psuedocode for part 2
+- Write reverse_comp function in bioinfo.py
+- Create demultiplex.py with index pairing and demultiplexing function
+- Create test input and output fastq files
 
 **Scripts run:**
 
