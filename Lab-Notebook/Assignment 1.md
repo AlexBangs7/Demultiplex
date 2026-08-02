@@ -51,17 +51,25 @@ N/A
 **Scripts run:**
 
 ```
-pixi shell
-./Assignment-the-first.Part1.py -t True R1
+qscore-R1.sh
+qscore-R2.sh
+qscore-R3.sh
+qscore-R4.sh
 ```
 
 **Commands run:**
 
-```pixi shell 
+```
+pixi shell 
 ./Assignment-the-first.Part1.py -t True R1 
 ./Assignment-the-first.Part1.py -t True R2 
 ./Assignment-the-first.Part1.py -t True R3 
 ./Assignment-the-first.Part1.py -t True R4 
+
+sbatch Assignment-the-first/qscore-R1.sh
+sbatch Assignment-the-first/qscore-R2.sh
+sbatch Assignment-the-first/qscore-R3.sh
+sbatch Assignment-the-first/qscore-R4.sh
 ```
 
 **Job resource usage (`/usr/bin/time -v` summary from Talapas):**
@@ -70,7 +78,7 @@ N/A
 
 ----------------------------------------------------------
 
-### [08-01-2026]
+### [08-02-2026]
 
 - Examine files
     - R1 = Read1 (102 bases)
@@ -82,7 +90,12 @@ N/A
 
 **Scripts run:**
 
-```x```
+```
+qscore-R1.sh
+qscore-R2.sh
+qscore-R3.sh
+qscore-R4.sh
+```
 
 **Commands run:**
 

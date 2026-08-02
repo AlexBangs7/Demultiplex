@@ -69,10 +69,9 @@ if read != None: # If a read number is provided, print to file named RX_distribu
 else:
     print("No read provided")
 
-
-x=range(len(mean_scores))
-y=mean_scores
-plt.scatter(x,y)
+pos=range(len(mean_scores))
+scores=mean_scores
+plt.bar(pos,scores)
 plt.ylim(0,44)
 plt.ylabel("Quality Score")
 plt.xlabel("Base Position")
