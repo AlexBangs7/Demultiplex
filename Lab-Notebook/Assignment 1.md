@@ -39,7 +39,36 @@ N/A
 
 N/A
 
--------------------------------------------------------
+----------------------------------------------------
+
+### [08-02-2026]
+
+- Resolve bugs in Part1.py
+- Add script to write distribution to tsv
+- Add script to create distribution figure 
+- Confirm its working on test files
+
+**Scripts run:**
+
+```
+pixi shell
+./Assignment-the-first.Part1.py -t True R1
+```
+
+**Commands run:**
+
+```pixi shell 
+./Assignment-the-first.Part1.py -t True R1 
+./Assignment-the-first.Part1.py -t True R2 
+./Assignment-the-first.Part1.py -t True R3 
+./Assignment-the-first.Part1.py -t True R4 
+```
+
+**Job resource usage (`/usr/bin/time -v` summary from Talapas):**
+
+N/A
+
+----------------------------------------------------------
 
 ### [08-01-2026]
 
@@ -49,6 +78,7 @@ N/A
     - R3 = Index2 (Rev-Comp)
     - R4 = Read2
     - Phred +33 encoding
+- Copy over PS4 quality score distribution code into Part1.py
 
 **Scripts run:**
 
