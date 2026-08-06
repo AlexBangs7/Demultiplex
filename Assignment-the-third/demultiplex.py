@@ -141,7 +141,7 @@ def demultiplex(Read1:str,Read2:str,Read3:str,Read4:str, index_file:str, output_
             R2score = bioinfo.qual_score(r2_record[3])
             R3score = bioinfo.qual_score(r3_record[3])
 
-            if R2score <= qscore_cutoff or R3score <= qscore_cutoff: # unknown
+            if R2score < qscore_cutoff or R3score < qscore_cutoff: # unknown
                 for i in range(4):
                     ufs["unknown"][0].write(f'{r1_record[i]}\n')
                     ufs["unknown"][1].write(f'{r4_record[i]}\n')

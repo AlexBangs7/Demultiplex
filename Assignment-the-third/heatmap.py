@@ -13,7 +13,7 @@ df[["Index1","Index2"]] = df["Barcode"].str.split('-', n=1, expand=True)
 # Convert dataframe to array, with Indexes as row and column labels
 
 pt = df.pivot_table(index='Index1',columns='Index2',values='Count',fill_value=0)
-
+print(pt)
 # Plot arrays on heatmaps
 
 plt.figure(figsize=(8, 6))
