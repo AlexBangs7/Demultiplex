@@ -7,7 +7,7 @@ import seaborn as sns
 
 # Generate dataframe from counts.txt
 
-df = pd.read_csv('./outputs/counts.txt', sep='\t')
+df = pd.read_csv('/scratch/bgmp/abangs/demux/counts.txt', sep='\t')
 df[["Index1","Index2"]] = df["Barcode"].str.split('-', n=1, expand=True)
 
 # Convert dataframe to array, with Indexes as row and column labels
