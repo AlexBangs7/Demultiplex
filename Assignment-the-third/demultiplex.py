@@ -9,12 +9,11 @@ from itertools import permutations
 
 def get_args():
     parser=argparse.ArgumentParser()
-    parser.add_argument("-q", "--qscore", help="q-score cutoff for unknown indexes", required=True)
+    parser.add_argument("-q", "--qscore", help="q-score cutoff for unknown indexes", default=2, required=False)
     parser.add_argument("-t", "--test", help="if using test files", choices=[None, 'zipped', 'unzipped'], required=False)
     return parser.parse_args()
 args = get_args()
-
-args.qscore = int(args.qscore)
+qscore = int(args.qscore)
 
 # Establish index and fastq files
 
@@ -25,7 +24,7 @@ if args.test == 'zipped': # Zipped test files
     R2_file = directory + "TEST-input_FASTQ/R2.fastq.gz"
     R3_file = directory + "TEST-input_FASTQ/R3.fastq.gz"
     R4_file = directory + "TEST-input_FASTQ/R4.fastq.gz"
-    output_folder = directory + "TEST-output_FASTQ/"
+    output_folder = "/scratch/bgmp/abangs/demux/"
 
 
 if args.test == 'unzipped': # Unzipped test files
@@ -35,7 +34,7 @@ if args.test == 'unzipped': # Unzipped test files
     R2_file = directory + "TEST-input_FASTQ/R2.fastq"
     R3_file = directory + "TEST-input_FASTQ/R3.fastq"
     R4_file = directory + "TEST-input_FASTQ/R4.fastq"
-    output_folder = directory + "TEST-output_FASTQ/"
+    output_folder = "/scratch/bgmp/abangs/demux/"
 
 
 else: # Files for actual demultiplexing sequence
@@ -45,7 +44,7 @@ else: # Files for actual demultiplexing sequence
     R2_file = directory + "1294_S1_L008_R2_001.fastq.gz"
     R3_file = directory + "1294_S1_L008_R3_001.fastq.gz"
     R4_file = directory + "1294_S1_L008_R4_001.fastq.gz"
-    output_folder = "/projects/bgmp/abangs/bioinfo/Bi622/Demultiplex/Assignment-the-third/outputs/"
+    output_folder = "/scratch/bgmp/abangs/demux/"
 
 # Create dictionaries of matched and hopped index pairs
 
@@ -101,6 +100,7 @@ def open_outputs(output_folder:str, indexes:set):
     counts_file = open(f'{output_folder}counts.txt', 'w')
     return mfs, hfs, ufs, counts_file
 
+
 # 2.5 read record function
 
 def read_record(file):
@@ -116,15 +116,16 @@ def demultiplex(Read1:str,Read2:str,Read3:str,Read4:str, index_file:str, output_
 
     matched_indexes, hopped_indexes, index_set = index_pairing(index_file)
 
-    mfs, hfs, ufs, counts = open_outputs(output_folder,index_set)
+    mfs, hfs, ufs, counts_file = open_outputs(output_folder,index_set)
 
     if args.test == None or args.test == 'zipped':
         read = gzip.open
     else:
         read = open
 
+    unknown_count, hopped_count, matched_count = 0, 0, 0
+
     with read(Read1,"rt") as R1, read(Read2,"rt") as R2, read(Read3,"rt") as R3, read(Read4,"rt") as R4:
-        unknown_indexes = 0
         while True:
             r1_record = read_record(R1)
             r2_record = read_record(R2)
@@ -144,28 +145,33 @@ def demultiplex(Read1:str,Read2:str,Read3:str,Read4:str, index_file:str, output_
                 for i in range(4):
                     ufs["unknown"][0].write(f'{r1_record[i]}\n')
                     ufs["unknown"][1].write(f'{r4_record[i]}\n')
-                unknown_indexes += 1
+                unknown_count += 1
             elif r2_record[1] not in index_set or r3_record[1] not in index_set: # unknown index or index with Ns
                 for i in range(4):
                     ufs["unknown"][0].write(f'{r1_record[i]}\n')
                     ufs["unknown"][1].write(f'{r4_record[i]}\n')
-                unknown_indexes += 1
+                unknown_count += 1
             elif r2_record[1] != r3_record[1]: # hopped
                 for i in range(4):
                     hfs["hopped"][0].write(f'{r1_record[i]}\n')
                     hfs["hopped"][1].write(f'{r4_record[i]}\n')
                 hopped_indexes[f'{r2_record[1]}-{r3_record[1]}'] += 1
+                hopped_count +=1
             else: # matched
                 for i in range(4):
                     mfs[f'{r2_record[1]}'][0].write(f'{r1_record[i]}\n')
                     mfs[f'{r2_record[1]}'][1].write(f'{r4_record[i]}\n')
                 matched_indexes[f'{r2_record[1]}-{r3_record[1]}'] += 1
+                matched_count +=1
+    total_count = unknown_count + hopped_count + matched_count
 
-    counts.write('Barcode\tCount\n')
+    counts_file.write('Barcode\tCount\tPercentage\n')
     for k,v in matched_indexes.items():
-        counts.write(f'{k}\t{v}\n')
+        counts_file.write(f'{k}\t{v}\t{round(v/total_count, 4)}\n')
     for k,v in hopped_indexes.items():
-        counts.write(f'{k}\t{v}\n')
-    counts.write(f'Unknowns\t{unknown_indexes}\n')
+        counts_file.write(f'{k}\t{v}\t{round(v/total_count, 4)}\n')
+    counts_file.write(f'Total Matched\t{matched_count}\t{round(matched_count/total_count, 4)}\n')
+    counts_file.write(f'Total Hopped:\t{hopped_count}\t{round(hopped_count/total_count, 4)}\n')
+    counts_file.write(f'Total Unknowns\t{unknown_count}\t{round(unknown_count/total_count, 4)}\n')
 
-demultiplex(R1_file,R2_file,R3_file,R4_file,index_file,output_folder,args.qscore)
+demultiplex(R1_file,R2_file,R3_file,R4_file,index_file,output_folder,qscore)
